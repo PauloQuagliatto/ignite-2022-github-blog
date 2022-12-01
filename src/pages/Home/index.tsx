@@ -17,6 +17,13 @@ export interface UserData {
   followers: string
 }
 
+export interface IssueData {
+  id: number
+  body: string
+  comments: number
+  createdAt: string
+}
+
 export function Home() {
   const [userData, setUserData] = useState<UserData>({
     name: '',
@@ -27,13 +34,15 @@ export function Home() {
     company: '',
     followers: '',
   })
+  const [issues, setIssues] = useState<IssueData[]>([])
+  const [searchInput, setSearchInput] = useState('')
 
   async function getUserData() {
     try {
-      const res = await axios.get(
+      const userRes = await axios.get(
         'https://api.github.com/users/PauloQuagliatto'
       )
-      const resData = res.data
+      const resData = userRes.data
       setUserData({
         name: resData.name,
         bio: resData.bio,
@@ -48,8 +57,26 @@ export function Home() {
     }
   }
 
+  async function getIssuesData() {
+    try {
+      const issuesRes = await axios.get(
+        `https://api.github.com/search/issues?q=${searchInput}repo:rocketseat-education/reactjs-github-blog-challenge`
+      )
+      const issuesArray = issuesRes.data.items
+      setIssues(issuesArray.map((issue: any) => ({
+        id: issue.id,
+        body: issue.body,
+        comments: issue.comments,
+        createdAt: issue.created_at
+      })))
+    } catch (e) {
+      alert('Não foi possível acessar o github')
+    }
+  }
+
   useEffect(() => {
     getUserData()
+    getIssuesData()
   }, [])
 
   return (
@@ -59,6 +86,15 @@ export function Home() {
         <SearchForm />
         <RepositoriesList />
       </HomeContainer>
+      {
+        issues.map((issue) => {
+          return (
+            <div key={issue.id}>
+              <p>{issue.body}</p>
+            </div>
+          )
+        })
+      }
     </>
   )
 }
